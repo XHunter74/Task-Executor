@@ -5,13 +5,24 @@ namespace TaskExecutor;
 public class TaskExecutor : IDisposable
 {
     private readonly ConcurrentQueue<Func<Task>> _taskQueue = new();
-    private readonly List<Task> _runningTasks = [];
+    private readonly List<Task> _runningTasks = new();
     private readonly CancellationTokenSource _internalCts = new();
     private readonly CancellationToken _externalCancellationToken;
-    private readonly SemaphoreSlim _semaphore;
-    private readonly int _maxConcurrency;
+    private SemaphoreSlim _semaphore;
+    private int _maxConcurrency;
 
     public event Action<Exception> OnTaskError;
+
+    public bool HasRunningTasks
+    {
+        get
+        {
+            lock (_runningTasks)
+            {
+                return _runningTasks.Count > 0;
+            }
+        }
+    }
 
     public TaskExecutor(int initialConcurrency, CancellationToken cancellationToken = default)
     {
@@ -28,6 +39,31 @@ public class TaskExecutor : IDisposable
     public void EnqueueTask(Func<Task> taskFunc)
     {
         _taskQueue.Enqueue(taskFunc);
+    }
+
+    public void ChangeConcurrency(int newConcurrency)
+    {
+        if (newConcurrency <= 0)
+            throw new ArgumentException("Concurrency must be greater than 0");
+
+        lock (_semaphore)
+        {
+            var diff = newConcurrency - _maxConcurrency;
+
+            if (diff > 0)
+            {
+                _semaphore.Release(diff);
+            }
+            else if (diff < 0)
+            {
+                for (int i = 0; i < -diff; i++)
+                {
+                    _semaphore.Wait();
+                }
+            }
+
+            _maxConcurrency = newConcurrency;
+        }
     }
 
     private void StartProcessing()
@@ -66,7 +102,7 @@ public class TaskExecutor : IDisposable
             }
             catch (OperationCanceledException)
             {
-                // Do nothing
+                // Normal cancellation
             }
         }, _internalCts.Token);
     }
@@ -86,6 +122,7 @@ public class TaskExecutor : IDisposable
     public async Task StopAsync()
     {
         _internalCts.Cancel();
+
         Task[] running;
         lock (_runningTasks)
         {
