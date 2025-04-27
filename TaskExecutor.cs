@@ -4,14 +4,14 @@ namespace TaskExecutor;
 
 public class TaskExecutor : IDisposable
 {
-    private readonly ConcurrentQueue<Func<Task>> _taskQueue = new();
-    private readonly List<Task> _runningTasks = new();
+    private readonly ConcurrentQueue<TaskForExecute> _taskQueue = new();
+    private readonly List<Task> _runningTasks = [];
     private readonly CancellationTokenSource _internalCts = new();
     private readonly CancellationToken _externalCancellationToken;
-    private SemaphoreSlim _semaphore;
+    private readonly SemaphoreSlim _semaphore;
     private int _maxConcurrency;
 
-    public event Action<Exception> OnTaskError;
+    public event Action<Object, Exception> OnTaskError;
 
     public bool HasRunningTasks
     {
@@ -36,9 +36,9 @@ public class TaskExecutor : IDisposable
         StartProcessing();
     }
 
-    public void EnqueueTask(Func<Task> taskFunc)
+    public void EnqueueTask(object taskId, Func<Task> taskFunc)
     {
-        _taskQueue.Enqueue(taskFunc);
+        _taskQueue.Enqueue(new TaskForExecute(taskId, taskFunc));
     }
 
     public void ChangeConcurrency(int newConcurrency)
@@ -76,9 +76,9 @@ public class TaskExecutor : IDisposable
                 {
                     await _semaphore.WaitAsync(_internalCts.Token);
 
-                    if (_taskQueue.TryDequeue(out var taskFunc))
+                    if (_taskQueue.TryDequeue(out var taskForExecute))
                     {
-                        var task = ExecuteTaskAsync(taskFunc);
+                        var task = ExecuteTaskAsync(taskForExecute);
                         lock (_runningTasks)
                         {
                             _runningTasks.Add(task);
@@ -107,15 +107,15 @@ public class TaskExecutor : IDisposable
         }, _internalCts.Token);
     }
 
-    private async Task ExecuteTaskAsync(Func<Task> taskFunc)
+    private async Task ExecuteTaskAsync(TaskForExecute taskForExecute)
     {
         try
         {
-            await taskFunc();
+            await taskForExecute.TaskFunc();
         }
         catch (Exception ex)
         {
-            OnTaskError?.Invoke(ex);
+            OnTaskError?.Invoke(taskForExecute.Id, ex);
         }
     }
 
