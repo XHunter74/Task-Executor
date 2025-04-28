@@ -10,8 +10,9 @@ public class TaskExecutor : IDisposable
     private readonly CancellationToken _externalCancellationToken;
     private readonly SemaphoreSlim _semaphore;
     private int _maxConcurrency;
+    private bool _disposed;
 
-    public event Action<Object, Exception>? OnTaskError;
+    public event Action<object, Exception>? OnTaskError;
 
     public bool HasRunningTasks
     {
@@ -133,11 +134,25 @@ public class TaskExecutor : IDisposable
             await Task.WhenAll(running);
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _internalCts.Cancel();
+                _semaphore.Dispose();
+                _internalCts.Dispose();
+            }
+
+            _disposed = true;
+        }
+    }
+
     public void Dispose()
     {
-        _internalCts.Cancel();
-        _semaphore.Dispose();
-        _internalCts.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }
 
