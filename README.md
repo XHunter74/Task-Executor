@@ -17,6 +17,22 @@ TaskExecutor is a .NET 6.0 library that provides a concurrency-controlled task e
 
 - .NET 6.0 SDK
 
+### Installation via NuGet
+
+You can install the `TaskExecutor` library via NuGet Package Manager:
+
+```bash
+dotnet add package task-executor
+```
+
+Or add the following to your `.csproj` file:
+
+```xml
+<PackageReference Include="task-executor" Version="*" />
+```
+
+Replace `*` with the desired version.
+
 ### Using the Library
 
 To use the `TaskExecutor` library in your project:
