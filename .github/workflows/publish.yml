@@ -35,47 +35,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Extract version from tag
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Update .csproj with version and release notes
-        run: |
-          if [ -f release-notes.txt ]; then
-            RELEASE_NOTES=$(sed ':a;N;$!ba;s/\n/\\n/g' release-notes.txt)
-            sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" TaskExecutor/TaskExecutor.csproj
-            sed -i "s|<PackageReleaseNotes>.*</PackageReleaseNotes>|<PackageReleaseNotes>${RELEASE_NOTES}</PackageReleaseNotes>|" TaskExecutor/TaskExecutor.csproj
-          else
-            sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" TaskExecutor/TaskExecutor.csproj
-          fi
-
-      - name: Commit .csproj changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add TaskExecutor/TaskExecutor.csproj
-          git commit -m "[skip ci] Update version and release notes for $VERSION" || echo "No changes to commit"
-          git push || echo "No changes pushed"
-
-      - name: Build NuGet package
-        run: dotnet pack TaskExecutor/TaskExecutor.csproj --configuration Release --no-build
-
-      - name: Publish NuGet package
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          dotnet nuget push TaskExecutor/bin/Release/*.nupkg \
-            --api-key $NUGET_API_KEY \
-            --source https://api.nuget.org/v3/index.json
+        - name: Checkout code
+          uses: actions/checkout@v3
+  
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v3
+          with:
+            dotnet-version: '8.0.x'
+  
+        - name: Restore dependencies
+          run: dotnet restore
+  
+        - name: Extract version from tag
+          run: |
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+  
+        - name: Update .csproj with version and release notes
+          run: |
+            if [ -f release-notes.txt ]; then
+              RELEASE_NOTES=$(sed ':a;N;$!ba;s/\n/\\n/g' release-notes.txt)
+              sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" TaskExecutor/TaskExecutor.csproj
+              sed -i "s|<PackageReleaseNotes>.*</PackageReleaseNotes>|<PackageReleaseNotes>${RELEASE_NOTES}</PackageReleaseNotes>|" TaskExecutor/TaskExecutor.csproj
+            else
+              sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" TaskExecutor/TaskExecutor.csproj
+            fi
+  
+        - name: Commit .csproj changes
+          run: |
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add TaskExecutor/TaskExecutor.csproj
+            git commit -m "[skip ci] Update version and release notes for $VERSION" || echo "No changes to commit"
+            git push || echo "No changes pushed"
+  
+        - name: Build project
+          run: dotnet build TaskExecutor/TaskExecutor.csproj --configuration Release
+  
+        - name: Pack NuGet package
+          run: dotnet pack TaskExecutor/TaskExecutor.csproj --configuration Release --no-build
+  
+        - name: Publish NuGet package
+          env:
+            NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          run: |
+            dotnet nuget push TaskExecutor/bin/Release/*.nupkg \
+              --api-key $NUGET_API_KEY \
+              --source https://api.nuget.org/v3/index.json
+  
