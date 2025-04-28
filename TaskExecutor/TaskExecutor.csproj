@@ -5,6 +5,23 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>task-executor</PackageId>
+    <Title>TaskExecutor - Concurrency-Controlled Task Execution Library for .NET</Title>
+    <Authors>xhunter74</Authors>
+    <Copyright>Copyright (c) 2025 Serhiy Krasovskyy xhunter74@gmail.com</Copyright>
+    <PackageProjectUrl>https://github.com/XHunter74/Task-Executor</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/XHunter74/Task-Executor</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>TaskExecutor is a .NET library designed for efficient and controlled task execution. It supports concurrency management, task queuing, error handling, and graceful shutdown, making it ideal for applications requiring robust asynchronous task processing.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>task execution, concurrency, asynchronous, .NET, task-queue, parallel processing, task scheduler, library, C#</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
