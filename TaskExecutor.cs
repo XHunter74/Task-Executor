@@ -11,7 +11,7 @@ public class TaskExecutor : IDisposable
     private readonly SemaphoreSlim _semaphore;
     private int _maxConcurrency;
 
-    public event Action<Object, Exception> OnTaskError;
+    public event Action<Object, Exception>? OnTaskError;
 
     public bool HasRunningTasks
     {
