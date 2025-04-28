@@ -1,6 +1,6 @@
 ﻿
 var cts = new CancellationTokenSource();
-var executor = new TaskExecutor.TaskExecutor(3, cts.Token);
+using var executor = new TaskExecutor.TaskExecutor(3, cts.Token);
 
 executor.OnTaskError += (id, ex) => Console.WriteLine($"Task {id} error: {ex.Message}");
 
