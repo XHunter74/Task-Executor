@@ -4,6 +4,8 @@ TaskExecutor is a .NET 8.0 console application that provides a concurrency-contr
 
 ## Features
 
+- **Limited Concurrent Tasks**: Restrict the number of tasks running simultaneously.
+- **Automatic Task Execution**: Automatically start a new task as soon as one completes.
 - **Concurrency Control**: Dynamically adjust the number of concurrent tasks.
 - **Task Queue**: Enqueue tasks with unique IDs and execute them asynchronously.
 - **Error Handling**: Capture and handle task-specific errors via an event.
