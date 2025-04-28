@@ -34,10 +34,17 @@ jobs:
       run: |
         echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
+    - name: Debug release notes
+      run: |
+        if [ -f release-notes.txt ]; then
+          cat release-notes.txt
+        else
+          echo "No release notes found."
+
     - name: Update .csproj with version and release notes
       run: |
         if [ -f release-notes.txt ]; then
-          RELEASE_NOTES=$(cat release-notes.txt)
+          RELEASE_NOTES=$(cat release-notes.txt | sed 's/[\&/]/\\&/g')
         else
           RELEASE_NOTES=""
         fi
