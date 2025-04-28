@@ -90,7 +90,7 @@ jobs:
     - name: Check for release notes
       id: check-release-notes
       run: |
-        if [ -f release-notes.txt]; then
+        if [ -f release-notes.txt ]; then
           echo "exists=true" >> $GITHUB_ENV
         else
           echo "exists=false" >> $GITHUB_ENV
