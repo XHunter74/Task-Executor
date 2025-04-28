@@ -15,6 +15,8 @@
     <Description>TaskExecutor is a .NET library designed for efficient and controlled task execution. It supports concurrency management, task queuing, error handling, and graceful shutdown, making it ideal for applications requiring robust asynchronous task processing.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>task execution, concurrency, asynchronous, .NET, task-queue, parallel processing, task scheduler, library, C#</PackageTags>
+    <Version>$(GitVersion_NuGetVersion)</Version>
+    <PackageReleaseNotes>Automatically published via GitHub Actions</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

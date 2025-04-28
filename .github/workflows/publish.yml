@@ -1,0 +1,84 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build library
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Extract version from tag
+      id: extract-version
+      run: |
+        echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+    - name: Update .csproj with version and release notes
+      run: |
+        if [ -f release-notes.txt ]; then
+          RELEASE_NOTES=$(cat release-notes.txt)
+        else
+          RELEASE_NOTES=""
+        fi
+        sed -i "s/<Version>.*<\/Version>/<Version>${{ env.VERSION }}<\/Version>/" TaskExecutor/TaskExecutor.csproj
+        sed -i "s/<PackageReleaseNotes>.*<\/PackageReleaseNotes>/<PackageReleaseNotes>${RELEASE_NOTES}<\/PackageReleaseNotes>/" TaskExecutor/TaskExecutor.csproj
+
+    - name: Commit .csproj changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add TaskExecutor/TaskExecutor.csproj
+        git commit -m "[skip ci] Update version and release notes in .csproj for ${{ env.VERSION }}" || echo "No changes to commit"
+
+    - name: Build NuGet package with version and release notes
+      env:
+        VERSION: ${{ env.VERSION }}
+      run: |
+        if [ -f release-notes.txt ]; then
+          RELEASE_NOTES=$(cat release-notes.txt)
+          dotnet pack --configuration Release --no-build \
+            -p:PackageVersion=$VERSION \
+            -p:PackageReleaseNotes="$RELEASE_NOTES"
+        else
+          dotnet pack --configuration Release --no-build \
+            -p:PackageVersion=$VERSION
+        fi
+
+    - name: Publish to NuGet
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        dotnet nuget push **/bin/Release/*.nupkg \
+          --api-key $NUGET_API_KEY \
+          --source https://api.nuget.org/v3/index.json
+
+    - name: Add release notes (if available)
+      if: ${{ steps.check-release-notes.outputs.exists == 'true' }}
+      run: |
+        RELEASE_NOTES=$(cat release-notes.txt)
+        echo "Release Notes: $RELEASE_NOTES"
+
+    - name: Check for release notes
+      id: check-release-notes
+      run: |
+        if [ -f release-notes.txt ]; then
+          echo "exists=true" >> $GITHUB_ENV
+        else
+          echo "exists=false" >> $GITHUB_ENV
+        fi
