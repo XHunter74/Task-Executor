@@ -5,7 +5,7 @@ namespace TaskExecutor;
 public class TaskExecutor : IDisposable
 {
     private readonly ConcurrentQueue<TaskForExecute> _taskQueue = new();
-    private readonly List<Task> _runningTasks = [];
+    private readonly List<Task> _runningTasks = new List<Task>();
     private readonly CancellationTokenSource _internalCts = new();
     private readonly CancellationToken _externalCancellationToken;
     private readonly SemaphoreSlim _semaphore;
