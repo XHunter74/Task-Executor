@@ -1,6 +1,6 @@
 # TaskExecutor
 
-TaskExecutor is a .NET 8.0 console application that provides a concurrency-controlled task execution framework. It allows you to enqueue tasks and execute them with a specified level of concurrency.
+TaskExecutor is a .NET 6.0 library that provides a concurrency-controlled task execution framework. It allows you to enqueue tasks and execute them with a specified level of concurrency.
 
 ## Features
 
@@ -17,27 +17,32 @@ TaskExecutor is a .NET 8.0 console application that provides a concurrency-contr
 
 - .NET 6.0 SDK
 
-### Building and Running
+### Using the Library
 
-1. Clone the repository or download the source code.
-2. Open a terminal in the project directory.
-3. Build the project:
+To use the `TaskExecutor` library in your project:
+
+1. Add a reference to the `TaskExecutor` project or include the compiled DLL in your application.
+2. Create an instance of the `TaskExecutor` class and configure it as needed.
+
+### Example Test Application
+
+A test application is included in the repository to demonstrate how to use the `TaskExecutor` library. The test application is located in the `TaskExecutorApp` project.
+
+#### Running the Test Application
+
+1. Open a terminal in the project directory.
+2. Build the solution:
    ```bash
    dotnet build
    ```
-4. Run the project:
+3. Run the test application:
    ```bash
-   dotnet run
+   dotnet run --project TaskExecutorApp
    ```
 
-### Example Usage
+#### Example Code
 
-The `Program.cs` file demonstrates how to use the `TaskExecutor` class:
-
-- Create a `TaskExecutor` instance with a specified concurrency level.
-- Enqueue tasks with unique IDs and asynchronous functions.
-- Handle task errors using the `OnTaskError` event.
-- Monitor running tasks and stop the executor gracefully.
+The `Program.cs` file in the `TaskExecutorApp` project demonstrates how to use the `TaskExecutor` library:
 
 ```csharp
 var cts = new CancellationTokenSource();
@@ -67,10 +72,12 @@ await executor.StopAsync();
 
 ## Project Structure
 
-- `TaskExecutor.cs`: Core implementation of the `TaskExecutor` class.
-- `TaskForExecute.cs`: Represents a task with an ID and a function to execute.
-- `Program.cs`: Example usage of the `TaskExecutor`.
-- `TaskExecutor.csproj`: Project file for building the application.
+- `TaskExecutor/`: Contains the `TaskExecutor` library source code.
+  - `TaskExecutor.cs`: Core implementation of the `TaskExecutor` class.
+  - `TaskForExecute.cs`: Represents a task with an ID and a function to execute.
+- `TaskExecutorApp/`: Test application demonstrating the usage of the `TaskExecutor` library.
+  - `Program.cs`: Example usage of the `TaskExecutor`.
+- `TaskExecutor.sln`: Solution file for building the library and test application.
 
 ## License
 
