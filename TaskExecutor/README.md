@@ -15,7 +15,7 @@ TaskExecutor is a .NET 8.0 console application that provides a concurrency-contr
 
 ### Prerequisites
 
-- .NET 8.0 SDK
+- .NET 6.0 SDK
 
 ### Building and Running
 
