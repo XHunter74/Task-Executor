@@ -25,7 +25,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Run tests
-      run: dotnet test TaskExecutor.Tests/TaskExecutor.Tests.csproj --configuration Debug --framework net6.0 --no-build --verbosity normal
+      run: dotnet test TaskExecutor.Tests/TaskExecutor.Tests.csproj --configuration Release --framework net6.0 --no-build --verbosity normal
 
     - name: Extract version from tag
       id: extract-version
@@ -80,7 +80,7 @@ jobs:
     - name: Check for release notes
       id: check-release-notes
       run: |
-        if [ -f release-notes.txt ]; then
+        if [ -f release-notes.txt]; then
           echo "exists=true" >> $GITHUB_ENV
         else
           echo "exists=false" >> $GITHUB_ENV
