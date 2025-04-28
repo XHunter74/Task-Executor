@@ -1,5 +1,8 @@
 # TaskExecutor
 
+![NuGet Version](https://img.shields.io/nuget/v/task-executor.svg?style=flat-square)
+![NuGet Downloads](https://img.shields.io/nuget/dt/task-executor.svg?style=flat-square)
+
 TaskExecutor is a .NET 6.0 library that provides a concurrency-controlled task execution framework. It allows you to enqueue tasks and execute them with a specified level of concurrency.
 
 ## Features
