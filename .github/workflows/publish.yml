@@ -24,6 +24,9 @@ jobs:
     - name: Build library
       run: dotnet build --configuration Release --no-restore
 
+    - name: Run tests
+      run: dotnet test TaskExecutor.Tests/TaskExecutor.Tests.csproj --no-build --verbosity normal
+
     - name: Extract version from tag
       id: extract-version
       run: |
