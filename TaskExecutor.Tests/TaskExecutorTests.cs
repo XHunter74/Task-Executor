@@ -20,7 +20,7 @@ public class TaskExecutorTests
             });
         }
 
-        await Task.Delay(100); // Allow time for tasks to start
+        await Task.Delay(500); // Allow time for tasks to start
 
         while (executor.HasRunningTasks)
         {
