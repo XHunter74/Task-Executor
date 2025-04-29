@@ -3,7 +3,7 @@
 /// <summary>
 /// This class represents a task that is to be executed by the TaskExecutor.
 /// </summary>
-public class TaskForExecute
+internal class TaskForExecute
 {
     /// <summary>
     /// The id of the task. This is used to identify the task in the queue.

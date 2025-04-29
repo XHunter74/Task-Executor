@@ -126,7 +126,7 @@ public class TaskExecutor : IDisposable
             {
                 while (!_internalCts.Token.IsCancellationRequested && !_externalCancellationToken.IsCancellationRequested)
                 {
-                    await _semaphore.WaitAsync(_internalCts.Token);
+                    await _semaphore.WaitAsync(_internalCts.Token).ConfigureAwait(false);
 
                     if (_taskQueue.TryDequeue(out var taskForExecute))
                     {
@@ -143,12 +143,12 @@ public class TaskExecutor : IDisposable
                                 _runningTasks.Remove(t);
                             }
                             _semaphore.Release();
-                        }, TaskContinuationOptions.ExecuteSynchronously);
+                        }, TaskContinuationOptions.ExecuteSynchronously).ConfigureAwait(false);
                     }
                     else
                     {
                         _semaphore.Release();
-                        await Task.Delay(50, _internalCts.Token);
+                        await Task.Delay(50, _internalCts.Token).ConfigureAwait(false);
                     }
                 }
             }
@@ -156,14 +156,14 @@ public class TaskExecutor : IDisposable
             {
                 // Normal cancellation
             }
-        }, _internalCts.Token);
+        }, _internalCts.Token).ConfigureAwait(false);
     }
 
     private async Task ExecuteTaskAsync(TaskForExecute taskForExecute)
     {
         try
         {
-            await taskForExecute.TaskFunc();
+            await taskForExecute.TaskFunc().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -186,7 +186,7 @@ public class TaskExecutor : IDisposable
         }
 
         if (running.Length > 0)
-            await Task.WhenAll(running);
+            await Task.WhenAll(running).ConfigureAwait(false);
     }
 
     protected virtual void Dispose(bool disposing)
