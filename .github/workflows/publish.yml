@@ -61,14 +61,6 @@ jobs:
               sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" TaskExecutor/TaskExecutor.csproj
             fi
   
-        - name: Commit .csproj changes
-          run: |
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add TaskExecutor/TaskExecutor.csproj
-            git commit -m "[skip ci] Update version and release notes for $VERSION" || echo "No changes to commit"
-            git push origin HEAD:master || echo "No changes pushed"
-  
         - name: Build project
           run: dotnet build TaskExecutor/TaskExecutor.csproj --configuration Release
   
