@@ -8,6 +8,7 @@ namespace TaskExecutor;
 internal class ActiveTaskRegistry
 {
     private readonly ConcurrentBag<TaskEntry> _runningTasks;
+    private readonly object _lock = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveTaskRegistry"/> class.
@@ -24,7 +25,7 @@ internal class ActiveTaskRegistry
     {
         get
         {
-            return _runningTasks.Any(taskKeeper => taskKeeper.IsRunning);
+            return _runningTasks.Any(t => t.IsRunning);
         }
     }
 
@@ -34,11 +35,14 @@ internal class ActiveTaskRegistry
     /// <param name="task">The task to remove from the running tasks collection.</param>
     public void Remove(Task task)
     {
-        var taskKeeper = _runningTasks.FirstOrDefault(t => t.TaskForKeep == task);
-        if (taskKeeper != null)
+        lock (_lock)
         {
-            taskKeeper.IsRunning = false;
-            taskKeeper.TaskForKeep = null;
+            var taskEntry = _runningTasks.FirstOrDefault(t => t.TaskReference == task);
+            if (taskEntry != null)
+            {
+                taskEntry.IsRunning = false;
+                taskEntry.TaskReference = null;
+            }
         }
     }
 
@@ -48,15 +52,18 @@ internal class ActiveTaskRegistry
     /// <param name="task">The task to add to the running tasks collection.</param>
     public void Add(Task task)
     {
-        var finishedTak = _runningTasks.FirstOrDefault(t => !t.IsRunning);
-        if (finishedTak != null)
+        lock (_lock)
         {
-            finishedTak.IsRunning = true;
-            finishedTak.TaskForKeep = task;
-        }
-        else
-        {
-            _runningTasks.Add(new TaskEntry(task));
+            var taskEntry = _runningTasks.FirstOrDefault(t => !t.IsRunning);
+            if (taskEntry != null)
+            {
+                taskEntry.IsRunning = true;
+                taskEntry.TaskReference = task;
+            }
+            else
+            {
+                _runningTasks.Add(new TaskEntry(task));
+            }
         }
     }
 
@@ -67,8 +74,8 @@ internal class ActiveTaskRegistry
     public Task[] GetRunningTasks()
     {
         return _runningTasks
-            .Where(t => t.IsRunning && t.TaskForKeep != null)
-            .Select(t => t.TaskForKeep!)
+            .Where(t => t.IsRunning && t.TaskReference != null)
+            .Select(t => t.TaskReference!)
             .ToArray();
     }
 }

@@ -13,7 +13,7 @@ internal class TaskEntry
     /// <summary>
     /// Gets or sets the reference to the tracked <see cref="Task"/>.
     /// </summary>
-    public Task? TaskForKeep { get; set; }
+    public Task? TaskReference { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskEntry"/> class with the specified task.
@@ -21,7 +21,7 @@ internal class TaskEntry
     /// <param name="task">The task to track.</param>
     public TaskEntry(Task task)
     {
-        TaskForKeep = task;
+        TaskReference = task;
         IsRunning = true;
     }
 }
