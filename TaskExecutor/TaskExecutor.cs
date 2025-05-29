@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace TaskExecutor;
 
@@ -122,21 +123,12 @@ public class TaskExecutor : IDisposable
             {
                 while (!_internalCts.Token.IsCancellationRequested && !_externalCancellationToken.IsCancellationRequested)
                 {
-                    await _semaphore.WaitAsync(_internalCts.Token).ConfigureAwait(false);
-
                     if (_taskQueue.TryDequeue(out var taskForExecute))
                     {
-                        var task = ExecuteTaskAsync(taskForExecute);
-                        _taskRegistry.Add(task);
-                        _ = task.ContinueWith(t =>
-                        {
-                            _taskRegistry.Remove(t);
-                            _semaphore.Release();
-                        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                        _ = ExecuteTaskAsync(taskForExecute);
                     }
                     else
                     {
-                        _semaphore.Release();
                         await Task.Delay(50, _internalCts.Token).ConfigureAwait(false);
                     }
                 }
@@ -152,7 +144,16 @@ public class TaskExecutor : IDisposable
     {
         try
         {
-            await taskForExecute.TaskFunc().ConfigureAwait(false);
+            await _semaphore.WaitAsync(_internalCts.Token).ConfigureAwait(false);
+
+            var task = taskForExecute.TaskFunc();
+            _ = task.ContinueWith(t =>
+            {
+                _taskRegistry.Remove(t);
+                _semaphore.Release();
+            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            _taskRegistry.Add(task);
+            await task.ConfigureAwait(false);
         }
         catch (Exception ex)
         {
