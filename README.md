@@ -5,6 +5,8 @@
 
 TaskExecutor is a .NET 8.0 library that provides a concurrency-controlled task execution framework. It allows you to enqueue tasks and execute them with a specified level of concurrency.
 
+**This library implements the [Active Object](https://en.wikipedia.org/wiki/Active_object) design pattern**, which decouples method execution from method invocation to enhance concurrency and simplify synchronized access to shared resources.
+
 ## Features
 
 - **Limited Concurrent Tasks**: Restrict the number of tasks running simultaneously.
@@ -23,17 +25,9 @@ TaskExecutor is a .NET 8.0 library that provides a concurrency-controlled task e
 ### Installation via NuGet
 
 You can install the `TaskExecutor` library via NuGet Package Manager:
-
-```bash
 dotnet add package task-executor
-```
-
 Or add the following to your `.csproj` file:
-
-```xml
 <PackageReference Include="task-executor" Version="*" />
-```
-
 Replace `*` with the desired version.
 
 ### Using the Library
@@ -50,19 +44,11 @@ A test application is included in the repository to demonstrate how to use the `
 #### Running the Test Application
 
 1. Open a terminal in the project directory.
-2. Build the solution:
-   ```bash
-   dotnet build
-   ```
-3. Run the test application:
-   ```bash
-   dotnet run --project TaskExecutorApp
-   ```
-
+2. Build the solution: ```dotnet build```
+3. Run the test application: ```dotnet run --project TaskExecutorApp```
 #### Example Code
 
 The `Program.cs` file in the `TaskExecutorApp` project demonstrates how to use the `TaskExecutor` library:
-
 ```csharp
 var cts = new CancellationTokenSource();
 using var executor = new TaskExecutor.TaskExecutor(3, cts.Token);
