@@ -73,9 +73,12 @@ internal class ActiveTaskRegistry
     /// <returns>An array of <see cref="Task"/> objects that are currently running.</returns>
     public Task[] GetRunningTasks()
     {
-        return _runningTasks
+        lock (_lock)
+        {
+            return _runningTasks
             .Where(t => t.IsRunning && t.TaskReference != null)
             .Select(t => t.TaskReference!)
             .ToArray();
+        }
     }
 }
