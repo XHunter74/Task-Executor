@@ -8,7 +8,7 @@ namespace TaskExecutor;
 public class TaskExecutor : IDisposable
 {
     private readonly ConcurrentQueue<TaskForExecute> _taskQueue = new();
-    private readonly List<Task> _runningTasks = new List<Task>();
+    private readonly ConcurrentBag<TaskKeeper> _runningTasks = new ConcurrentBag<TaskKeeper>();
     private readonly CancellationTokenSource _internalCts = new();
     private readonly CancellationToken _externalCancellationToken;
     private readonly SemaphoreSlim _semaphore;
@@ -27,10 +27,8 @@ public class TaskExecutor : IDisposable
     {
         get
         {
-            lock (_runningTasks)
-            {
-                return _runningTasks.Count > 0;
-            }
+            return _runningTasks.Any(taskKeeper => taskKeeper.IsRunning);
+
         }
     }
 
@@ -131,19 +129,12 @@ public class TaskExecutor : IDisposable
                     if (_taskQueue.TryDequeue(out var taskForExecute))
                     {
                         var task = ExecuteTaskAsync(taskForExecute);
-                        lock (_runningTasks)
-                        {
-                            _runningTasks.Add(task);
-                        }
-
+                        AddTaskToRunningTasks(task);
                         _ = task.ContinueWith(t =>
                         {
-                            lock (_runningTasks)
-                            {
-                                _runningTasks.Remove(t);
-                            }
+                            MarkTaskAsFinished(t);
                             _semaphore.Release();
-                        }, TaskContinuationOptions.ExecuteSynchronously).ConfigureAwait(false);
+                        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
                     }
                     else
                     {
@@ -157,6 +148,30 @@ public class TaskExecutor : IDisposable
                 // Normal cancellation
             }
         }, _internalCts.Token).ConfigureAwait(false);
+    }
+
+    private void MarkTaskAsFinished(Task task)
+    {
+        var taskKeeper = _runningTasks.FirstOrDefault(t => t.TaskForKeep == task);
+        if (taskKeeper != null)
+        {
+            taskKeeper.IsRunning = false;
+            taskKeeper.TaskForKeep = null;
+        }
+    }
+
+    private void AddTaskToRunningTasks(Task task)
+    {
+        var finishedTak = _runningTasks.FirstOrDefault(t => !t.IsRunning);
+        if (finishedTak != null)
+        {
+            finishedTak.IsRunning = true;
+            finishedTak.TaskForKeep = task;
+        }
+        else
+        {
+            _runningTasks.Add(new TaskKeeper(task));
+        }
     }
 
     private async Task ExecuteTaskAsync(TaskForExecute taskForExecute)
@@ -179,11 +194,10 @@ public class TaskExecutor : IDisposable
     {
         _internalCts.Cancel();
 
-        Task[] running;
-        lock (_runningTasks)
-        {
-            running = _runningTasks.ToArray();
-        }
+        var running = _runningTasks
+            .Where(t => t.IsRunning && t.TaskForKeep != null)
+            .Select(t => t.TaskForKeep!)
+            .ToArray();
 
         if (running.Length > 0)
             await Task.WhenAll(running).ConfigureAwait(false);
