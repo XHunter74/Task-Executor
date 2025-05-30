@@ -13,7 +13,7 @@ public class TaskExecutor : IDisposable
     private readonly ActiveTaskRegistry _taskRegistry = new();
     private readonly CancellationToken _externalCancellationToken;
     private readonly SemaphoreSlim _semaphore;
-    private int _queuePollingDelayMilliseconds;
+    private int _queuePollingDelayMilliseconds = DefaultQueuePollingDelayMilliseconds;
     private int _maxConcurrency;
     private bool _disposed;
 
