@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace TaskExecutor;
 
@@ -8,11 +7,13 @@ namespace TaskExecutor;
 /// </summary>
 public class TaskExecutor : IDisposable
 {
+    private const int DefaultQueuePollingDelayMilliseconds = 50;
     private readonly ConcurrentQueue<TaskForExecute> _taskQueue = new();
     private readonly CancellationTokenSource _internalCts = new();
     private readonly ActiveTaskRegistry _taskRegistry = new();
     private readonly CancellationToken _externalCancellationToken;
     private readonly SemaphoreSlim _semaphore;
+    private int _queuePollingDelayMilliseconds;
     private int _maxConcurrency;
     private bool _disposed;
 
@@ -30,6 +31,20 @@ public class TaskExecutor : IDisposable
         {
             return _taskRegistry.HasRunningTasks;
 
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the delay, in milliseconds, between polling attempts for the queue.
+    /// </summary>
+    public int QueuePollingDelayMilliseconds
+    {
+        get => _queuePollingDelayMilliseconds;
+        set
+        {
+            if (value < 0)
+                throw new ArgumentException("Queue polling delay must be non-negative");
+            _queuePollingDelayMilliseconds = value;
         }
     }
 
@@ -58,6 +73,33 @@ public class TaskExecutor : IDisposable
         _externalCancellationToken = cancellationToken;
 
         StartProcessing();
+    }
+
+    /// <summary>
+    /// Constructor for the TaskExecutor class.
+    /// </summary>
+    /// <param name="initialConcurrency">
+    /// Specifies the initial level of concurrency for the TaskExecutor. 
+    /// This determines how many tasks can run concurrently. 
+    /// Must be greater than 0.
+    /// </param>
+    /// <param name="queuePollingDelayMilliseconds">
+    /// Specifies the delay, in milliseconds, between polling attempts when the task queue is empty.
+    /// Must be non-negative. A higher value reduces CPU usage but may increase task start latency.
+    /// </param>
+    /// </param>
+    /// <param name="cancellationToken">
+    /// An optional CancellationToken that can be used to signal cancellation 
+    /// of task processing from an external source.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the initialConcurrency is less than or equal to 0.
+    /// </exception>
+    public TaskExecutor(int initialConcurrency, int queuePollingDelayMilliseconds = DefaultQueuePollingDelayMilliseconds, CancellationToken cancellationToken = default) : this(initialConcurrency, cancellationToken)
+    {
+        if (queuePollingDelayMilliseconds < 0)
+            throw new ArgumentException("Queue polling delay must be non-negative");
+        _queuePollingDelayMilliseconds = queuePollingDelayMilliseconds;
     }
 
     /// <summary>
@@ -129,7 +171,7 @@ public class TaskExecutor : IDisposable
                     }
                     else
                     {
-                        await Task.Delay(50, _internalCts.Token).ConfigureAwait(false);
+                        await Task.Delay(_queuePollingDelayMilliseconds, _internalCts.Token).ConfigureAwait(false);
                     }
                 }
             }
